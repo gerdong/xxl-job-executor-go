@@ -15,6 +15,10 @@
 11.支持外部路由（可与gin集成）
 ```
 
+# BUG 修复
+- 2022-05-20 执行器执行完成，进行回调任务时 callback 方法：如果 `xxl-job admin` 断开，则会导致本应用 panic
+- 2022-04-18 returnCall 方法，返回的数据结构与 xxl-job 所要求的不符（可能是xxl-job已经更新的缘故）
+
 # Example
 ```
 import (

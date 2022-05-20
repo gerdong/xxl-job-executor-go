@@ -3,6 +3,7 @@ package xxl
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -215,6 +216,23 @@ func (e *executor) taskLog(writer http.ResponseWriter, request *http.Request) {
 	_, _ = writer.Write(str)
 }
 
+var (
+	lastRegistStatus = -1 // 最后一次regist心跳的状态。 避免重复打印
+)
+
+func (e *executor) setlastRegistStatus(status int, msg string, iserr bool) {
+	if status == lastRegistStatus {
+		return
+	}
+
+	lastRegistStatus = status
+	if iserr {
+		e.log.Errorf(msg)
+	} else {
+		e.log.Infof(msg)
+	}
+}
+
 //注册执行器到调度中心
 func (e *executor) registry() {
 
@@ -235,26 +253,31 @@ func (e *executor) registry() {
 		func() {
 			result, err := e.post("/api/registry", string(param))
 			if err != nil {
-				e.log.Errorf("request /api/registry post failure error:%s", err.Error())
+				e.setlastRegistStatus(1, fmt.Sprintf("request /api/registry post failure error:%s", err.Error()), true)
+				//e.log.Errorf("request /api/registry post failure error:%s", err.Error())
 				return
 			}
 			defer result.Body.Close()
 			body, err := ioutil.ReadAll(result.Body)
 			if err != nil {
-				e.log.Errorf("request /api/registry read body failure error:%s:", err.Error())
+				e.setlastRegistStatus(2, fmt.Sprintf("request /api/registry read body failure error:%s:", err.Error()), true)
+				//e.log.Errorf("request /api/registry read body failure error:%s:",  err.Error())
 				return
 			}
 			res := &res{}
 			err = json.Unmarshal(body, &res)
 			if err != nil {
-				e.log.Errorf("request /api/registry json unmarshal failure error:%s:", err.Error())
+				e.setlastRegistStatus(3, fmt.Sprintf("request /api/registry json unmarshal failure error:%s:", err.Error()), true)
+				//e.log.Errorf("request /api/registry json unmarshal failure error:%s:",  err.Error())
 				return
 			}
 			if res.Code != 200 {
-				e.log.Errorf("request /api/registry response failure response:%+v:", res)
+				e.setlastRegistStatus(4, fmt.Sprintf("request /api/registry response failure response:%+v:", res), true)
+				//e.log.Errorf("request /api/registry response failure response:%+v:",  res)
 				return
 			}
-			e.log.Infof("request /api/registry success response:%+v", res)
+			e.setlastRegistStatus(0, fmt.Sprintf("request /api/registry success response:%+v", res), true)
+			//e.log.Infof("request /api/registry success response:%+v",res)
 		}()
 	}
 }

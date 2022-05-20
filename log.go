@@ -19,7 +19,7 @@ type logger struct {
 }
 
 func (l *logger) Infof(format string, a ...interface{}) {
-	fmt.Println(fmt.Sprintf(format, a...))
+	log.Println(fmt.Sprintf(format, a...))
 }
 
 func (l *logger) Errorf(format string, a ...interface{}) {
