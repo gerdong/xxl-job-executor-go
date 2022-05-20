@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	xxl "github.com/ainiaa/xxl-job-executor-go"
-	"github.com/ainiaa/xxl-job-executor-go/example/task"
+	xxl "github.com/gerdong/xxl-job-executor-go"
+	"github.com/gerdong/xxl-job-executor-go/example/task"
 	"log"
 )
 
 // Option
-func initViaOption() xxl.Executor{
+func initViaOption() xxl.Executor {
 	return xxl.NewExecutor(
 		xxl.ServerAddr("http://127.0.0.1/xxl-job-admin"),
 		xxl.AccessToken(""),            //请求令牌(默认为空)
@@ -18,8 +18,9 @@ func initViaOption() xxl.Executor{
 		xxl.SetLogger(&logger{}),       //自定义日志
 	)
 }
+
 // Config
-func initViaConfig() xxl.Executor{
+func initViaConfig() xxl.Executor {
 	c := xxl.Conf{
 		ServerAddr:   "http://127.0.0.1/xxl-job-admin",
 		ExecutorPort: "9999",
