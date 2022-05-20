@@ -126,7 +126,7 @@ func (e *executor) runTask(writer http.ResponseWriter, request *http.Request) {
 	err := json.Unmarshal(req, &param)
 	if err != nil {
 		_, _ = writer.Write(returnCall(param, 500, "params err"))
-		e.log.Errorf("task params parse failure params:%s error:%s",string(req), err.Error())
+		e.log.Errorf("task params parse failure params:%s error:%s", string(req), err.Error())
 		return
 	}
 	e.log.Infof("task params:%+v", param)
@@ -146,7 +146,7 @@ func (e *executor) runTask(writer http.ResponseWriter, request *http.Request) {
 			}
 		} else { //单机串行,丢弃后续调度 都进行阻塞
 			_, _ = writer.Write(returnCall(param, 500, "There are tasks running"))
-			e.log.Errorf("task[%s](%x) is running" ,param.JobID, param.ExecutorHandler)
+			e.log.Errorf("task[%s](%x) is running", param.JobID, param.ExecutorHandler)
 			return
 		}
 	}
@@ -167,7 +167,7 @@ func (e *executor) runTask(writer http.ResponseWriter, request *http.Request) {
 	go task.Run(func(code int64, msg string) {
 		e.callback(task, code, msg)
 	})
-	e.log.Infof("task [%d] (%s) to be running:",param.JobID, param.ExecutorHandler)
+	e.log.Infof("task [%d] (%s) to be running:", param.JobID, param.ExecutorHandler)
 	_, _ = writer.Write(returnGeneral())
 }
 
@@ -241,20 +241,20 @@ func (e *executor) registry() {
 			defer result.Body.Close()
 			body, err := ioutil.ReadAll(result.Body)
 			if err != nil {
-				e.log.Errorf("request /api/registry read body failure error:%s:",  err.Error())
+				e.log.Errorf("request /api/registry read body failure error:%s:", err.Error())
 				return
 			}
 			res := &res{}
 			err = json.Unmarshal(body, &res)
 			if err != nil {
-				e.log.Errorf("request /api/registry json unmarshal failure error:%s:",  err.Error())
+				e.log.Errorf("request /api/registry json unmarshal failure error:%s:", err.Error())
 				return
 			}
 			if res.Code != 200 {
-				e.log.Errorf("request /api/registry response failure response:%+v:",  res)
+				e.log.Errorf("request /api/registry response failure response:%+v:", res)
 				return
 			}
-			e.log.Infof("request /api/registry success response:%+v",res)
+			e.log.Infof("request /api/registry success response:%+v", res)
 		}()
 	}
 }
@@ -289,6 +289,7 @@ func (e *executor) callback(task *Task, code int64, msg string) {
 	res, err := e.post("/api/callback", string(returnCall(task.Param, code, msg)))
 	if err != nil {
 		e.log.Errorf("callback err : ", err.Error())
+		return
 	}
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
