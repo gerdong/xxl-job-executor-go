@@ -22,10 +22,12 @@ func returnCall(req *RunReq, code int64, msg string) []byte {
 		&callElement{
 			LogID:      req.LogID,
 			LogDateTim: req.LogDateTime,
-			ExecuteResult: &ExecuteResult{
-				Code: code,
-				Msg:  msg,
-			},
+			HandleCode: code,
+			HandleMsg:  msg,
+			//ExecuteResult: &ExecuteResult{
+			//	Code: code,
+			//	Msg:  msg,
+			//},
 		},
 	}
 	str, _ := json.Marshal(data)
@@ -45,8 +47,6 @@ func returnKill(req *killReq, code int64) []byte {
 	str, _ := json.Marshal(data)
 	return str
 }
-
-
 
 //通用返回
 func returnGeneral() []byte {
