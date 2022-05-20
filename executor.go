@@ -309,16 +309,22 @@ func (e *executor) RegistryRemove() {
 
 //回调任务列表
 func (e *executor) callback(task *Task, code int64, msg string) {
+	defer func() {
+		e.runList.Del(Int64ToStr(task.Id))
+	}()
+
 	res, err := e.post("/api/callback", string(returnCall(task.Param, code, msg)))
 	if err != nil {
 		e.log.Errorf("callback err : ", err.Error())
 		return
 	}
+
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		e.log.Errorf("callback ReadAll err:%s ", err.Error())
+		return
 	}
-	e.runList.Del(Int64ToStr(task.Id))
+
 	e.log.Infof("task[%d] callback success response:%s", task.Id, string(body))
 }
 
