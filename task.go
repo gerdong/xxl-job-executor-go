@@ -19,8 +19,8 @@ type Task struct {
 	Cancel    context.CancelFunc
 	StartTime int64
 	EndTime   int64
-	//日志
-	log Logger
+	Desc      string
+	log       Logger
 }
 
 //运行任务
@@ -40,5 +40,6 @@ func (t *Task) Run(callback func(code int64, msg string)) {
 
 //任务信息
 func (t *Task) Info() string {
-	return "任务ID[" + Int64ToStr(t.Id) + "]任务名称[" + t.Name + "]参数：" + t.Param.ExecutorParams
+	return fmt.Sprintf("TaskId\t\t:%d\nLogId\t\t:%d\nExecutorHandler\t:%s\nDescription\t:%s\nBlockStrategy\t%s\nBroadcastIndex\t:%d\nBroadcastTotal\t:%d",
+		t.Id, t.Param.LogID, t.Name, t.Desc, t.Param.ExecutorBlockStrategy, t.Param.BroadcastIndex, t.Param.BroadcastTotal)
 }

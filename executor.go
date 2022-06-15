@@ -21,7 +21,7 @@ type Executor interface {
 	//日志查询
 	LogHandler(handler LogHandler)
 	//注册任务
-	RegTask(pattern string, task TaskFunc)
+	RegTask(pattern string, desc string, task TaskFunc)
 	//运行任务
 	RunTask(writer http.ResponseWriter, request *http.Request)
 	//杀死任务
@@ -34,6 +34,8 @@ type Executor interface {
 	Run() error
 	//摘除 xxljob
 	RegistryRemove()
+	//显示所有已经注册的任务
+	GetAllTasks() map[string]*Task
 }
 
 //创建执行器
@@ -103,7 +105,13 @@ func (e *executor) Run() (err error) {
 	}
 	// 监听端口并提供服务
 	e.log.Infof("Starting server at " + e.address)
-	go server.ListenAndServe()
+	//go server.ListenAndServe()
+	err = server.ListenAndServe()
+	if err != nil {
+		e.log.Errorf("Failed: %v", err)
+		return
+	}
+
 	quit := make(chan os.Signal)
 	signal.Notify(quit, syscall.SIGKILL, syscall.SIGQUIT, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -112,9 +120,10 @@ func (e *executor) Run() (err error) {
 }
 
 //注册任务
-func (e *executor) RegTask(pattern string, task TaskFunc) {
+func (e *executor) RegTask(pattern string, desc string, task TaskFunc) {
 	var t = &Task{}
 	t.fn = task
+	t.Desc = desc
 	e.regList.Set(pattern, t)
 }
 
@@ -130,9 +139,9 @@ func (e *executor) runTask(writer http.ResponseWriter, request *http.Request) {
 		e.log.Errorf("task params parse failure params:%s error:%s", string(req), err.Error())
 		return
 	}
-	e.log.Infof("task params:%+v", param)
+
 	if !e.regList.Exists(param.ExecutorHandler) {
-		_, _ = writer.Write(returnCall(param, 500, "Task not registered"))
+		_, _ = writer.Write(returnCall(param, 500, "Task not registered: "+param.ExecutorHandler))
 		e.log.Errorf("task [%d] (%s) is not be registered yet", param.JobID, param.ExecutorHandler)
 		return
 	}
@@ -154,6 +163,7 @@ func (e *executor) runTask(writer http.ResponseWriter, request *http.Request) {
 
 	cxt := context.Background()
 	task := e.regList.Get(param.ExecutorHandler)
+
 	if param.ExecutorTimeout > 0 {
 		task.Ext, task.Cancel = context.WithTimeout(cxt, time.Duration(param.ExecutorTimeout)*time.Second)
 	} else {
@@ -163,6 +173,8 @@ func (e *executor) runTask(writer http.ResponseWriter, request *http.Request) {
 	task.Name = param.ExecutorHandler
 	task.Param = param
 	task.log = e.log
+
+	e.log.Infof("Task info: \n%s", task.Info())
 
 	e.runList.Set(Int64ToStr(task.Id), task)
 	go task.Run(func(code int64, msg string) {
@@ -257,7 +269,7 @@ func (e *executor) registry() {
 				//e.log.Errorf("request /api/registry post failure error:%s", err.Error())
 				return
 			}
-			defer result.Body.Close()
+			defer func() { _ = result.Body.Close() }()
 			body, err := ioutil.ReadAll(result.Body)
 			if err != nil {
 				e.setlastRegistStatus(2, fmt.Sprintf("request /api/registry read body failure error:%s:", err.Error()), true)
@@ -294,17 +306,33 @@ func (e *executor) RegistryRemove() {
 	param, err := json.Marshal(req)
 	if err != nil {
 		e.log.Errorf("RegistryRemove json marshal error:%s", err.Error())
+		return
 	}
+
 	res, err := e.post("/api/registryRemove", string(param))
 	if err != nil {
 		e.log.Errorf("request /api/RegistryRemove post failure error:%s", err.Error())
+		return
 	}
+
+	if res == nil {
+		e.log.Errorf("request /api/RegistryRemove post failure, response is nil.")
+		return
+	}
+
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		e.log.Errorf("request /api/RegistryRemove read body failure error:%s", err.Error())
+		return
 	}
+
 	e.log.Infof("request /api/RegistryRemove success response:%s", string(body))
 	_ = res.Body.Close()
+}
+
+// 返回所有任务
+func (e *executor) GetAllTasks() map[string]*Task {
+	return e.regList.data
 }
 
 //回调任务列表
