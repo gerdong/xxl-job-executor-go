@@ -3,6 +3,8 @@ forked from forked from https://github.com/ainiaa/xxl-job-executor-go
 - 执行器执行完成后，调用 callback 方法：如果 `xxl-job admin` 已经断开，则会导致本应用 panic
 - 执行 returnCall 方法，向xxl-job admin 提交的数据，其结构与 xxl-job 所要求的不符（可能是xxl-job已经更新的缘故）
 - 心跳 log 太啰嗦，简化
+- server.ListenAndServe 没有处理异常，导致明明启动失败，确看起来一切正常
+- 给Task增加Description
 
 # xxl-job-executor-go
 很多公司java与go开发共存，java中有xxl-job做为任务调度引擎，为此也出现了go执行器(客户端)，使用起来比较简单：
