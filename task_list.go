@@ -11,8 +11,8 @@ type taskList struct {
 //设置数据
 func (t *taskList) Set(key string, val *Task) {
 	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.data[key] = val
-	t.mu.Unlock()
 }
 
 //获取数据
@@ -32,17 +32,21 @@ func (t *taskList) GetAll() map[string]*Task {
 //设置数据
 func (t *taskList) Del(key string) {
 	t.mu.Lock()
+	defer t.mu.Unlock()
 	delete(t.data, key)
-	t.mu.Unlock()
 }
 
 //长度
 func (t *taskList) Len() int {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	return len(t.data)
 }
 
 //Key是否存在
 func (t *taskList) Exists(key string) bool {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	_, ok := t.data[key]
 	return ok
 }
