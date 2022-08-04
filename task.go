@@ -9,6 +9,10 @@ import (
 //任务执行函数
 type TaskFunc func(cxt context.Context, param *RunReq) string
 
+const (
+	MESSAGE_SUCCESS = "ok"
+)
+
 //任务
 type Task struct {
 	Id        int64
@@ -34,7 +38,12 @@ func (t *Task) Run(callback func(code int64, msg string)) {
 		}
 	}(t.Cancel)
 	msg := t.fn(t.Ext, t.Param)
-	callback(200, msg)
+	
+	code := 200
+	if msg != MESSAGE_SUCCESS {
+		code = 500
+	}
+	callback(int64(code), msg)
 	return
 }
 
