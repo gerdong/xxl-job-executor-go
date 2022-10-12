@@ -11,9 +11,9 @@ import (
 
 type LogHandler func(req *LogReq) *LogRes
 
-//默认返回
+// 默认返回
 func defaultLogHandler(req *LogReq) *LogRes {
-	return &LogRes{Code: 200, Msg: "", Content: LogResContent{
+	return &LogRes{Code: SuccessCode, Msg: "", Content: LogResContent{
 		FromLineNum: req.FromLineNum,
 		ToLineNum:   2,
 		LogContent:  "这是日志默认返回，说明没有设置LogHandler",
@@ -21,9 +21,9 @@ func defaultLogHandler(req *LogReq) *LogRes {
 	}}
 }
 
-//请求错误
+// 请求错误
 func reqErrLogHandler(w http.ResponseWriter, req *LogReq, err error) {
-	res := &LogRes{Code: 500, Msg: err.Error(), Content: LogResContent{
+	res := &LogRes{Code: FailureCode, Msg: err.Error(), Content: LogResContent{
 		FromLineNum: req.FromLineNum,
 		ToLineNum:   0,
 		LogContent:  err.Error(),

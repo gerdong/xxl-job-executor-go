@@ -1,6 +1,6 @@
 package xxl
 
-//通用响应
+// 通用响应
 type res struct {
 	Code int64       `json:"code"` // 200 表示正常、其他失败
 	Msg  interface{} `json:"msg"`  // 错误提示消息
@@ -8,25 +8,26 @@ type res struct {
 
 /*****************  上行参数  *********************/
 
-//注册参数
+// Registry 注册参数
 type Registry struct {
 	RegistryGroup string `json:"registryGroup"`
 	RegistryKey   string `json:"registryKey"`
 	RegistryValue string `json:"registryValue"`
 }
 
-//执行器执行完任务后，回调任务结果时使用
+// 执行器执行完任务后，回调任务结果时使用
 type call []*callElement
 
 type callElement struct {
-	LogID      int64  `json:"logId"`
-	LogDateTim int64  `json:"logDateTim"`
-	HandleCode int64  `json:"handleCode"`
+	LogID         int64          `json:"logId"`
+	LogDateTim    int64          `json:"logDateTim"`
+	ExecuteResult *ExecuteResult `json:"executeResult"`
+	//以下是7.31版本 v2.3.0 Release所使用的字段
+	HandleCode int    `json:"handleCode"` //200表示正常,500表示失败
 	HandleMsg  string `json:"handleMsg"`
-	//ExecuteResult *ExecuteResult `json:"executeResult"`
 }
 
-//任务执行结果 200 表示任务执行正常，500表示失败
+// ExecuteResult 任务执行结果 200 表示任务执行正常，500表示失败
 type ExecuteResult struct {
 	Code int64       `json:"code"`
 	Msg  interface{} `json:"msg"`
@@ -34,14 +35,14 @@ type ExecuteResult struct {
 
 /*****************  下行参数  *********************/
 
-//阻塞处理策略
+// 阻塞处理策略
 const (
 	serialExecution = "SERIAL_EXECUTION" //单机串行
 	discardLater    = "DISCARD_LATER"    //丢弃后续调度
 	coverEarly      = "COVER_EARLY"      //覆盖之前调度
 )
 
-//触发任务请求参数
+// RunReq 触发任务请求参数
 type RunReq struct {
 	JobID                 int64  `json:"jobId"`                 // 任务ID
 	ExecutorHandler       string `json:"executorHandler"`       // 任务标识
@@ -57,26 +58,31 @@ type RunReq struct {
 	BroadcastTotal        int64  `json:"broadcastTotal"`        // 分片参数：总分片
 }
 
-//终止任务请求参数
+// 终止任务请求参数
 type killReq struct {
 	JobID int64 `json:"jobId"` // 任务ID
 }
 
-//日志请求
+// 忙碌检测请求参数
+type idleBeatReq struct {
+	JobID int64 `json:"jobId"` // 任务ID
+}
+
+// LogReq 日志请求
 type LogReq struct {
 	LogDateTim  int64 `json:"logDateTim"`  // 本次调度日志时间
 	LogID       int64 `json:"logId"`       // 本次调度日志ID
 	FromLineNum int   `json:"fromLineNum"` // 日志开始行号，滚动加载日志
 }
 
-//日志响应
+// LogRes 日志响应
 type LogRes struct {
 	Code    int64         `json:"code"`    // 200 表示正常、其他失败
 	Msg     string        `json:"msg"`     // 错误提示消息
 	Content LogResContent `json:"content"` // 日志响应内容
 }
 
-//日志响应内容
+// LogResContent 日志响应内容
 type LogResContent struct {
 	FromLineNum int    `json:"fromLineNum"` // 本次请求，日志开始行数
 	ToLineNum   int    `json:"toLineNum"`   // 本次请求，日志结束行号
