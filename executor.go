@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/robfig/cron/v3"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -43,6 +45,8 @@ type Executor interface {
 	RegistryRemove()
 	// GetAllTasks 显示所有已经注册的任务
 	GetAllTasks() map[string]*Task
+	// ExpireLog 自动清理日志
+	ExpireLog(days int, dir string)
 }
 
 // 创建执行器
@@ -441,4 +445,25 @@ func (e *executor) Beat(writer http.ResponseWriter, request *http.Request) {
 // IdleBeat 忙碌检测
 func (e *executor) IdleBeat(writer http.ResponseWriter, request *http.Request) {
 	e.idleBeat(writer, request)
+}
+
+func (e *executor) ExpireLog(days int, dir string) {
+	if days <= 0 || dir == "" || !exists(dir) {
+		e.log.Info("Warn: ExpireLog(%d, %s): 'days' must be greater than 0, and 'dir' must exist", days, dir)
+		return
+	}
+
+	c := cron.New()
+	_, err := c.AddFunc("0/1 * * * *", func() {
+		sub := findExpireDir(days, dir)
+		for _, s := range sub {
+			removeDir(filepath.Join(dir, s))
+		}
+	})
+
+	if err != nil {
+		e.log.Error("Error: ExpireLog(), " + err.Error())
+		return
+	}
+	c.Start()
 }
