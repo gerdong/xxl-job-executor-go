@@ -454,7 +454,7 @@ func (e *executor) ExpireLog(days int, dir string) {
 	}
 
 	c := cron.New()
-	_, err := c.AddFunc("0/1 * * * *", func() {
+	_, err := c.AddFunc("* 0/2 * * *", func() {
 		sub := findExpireDir(days, dir)
 		for _, s := range sub {
 			removeDir(filepath.Join(dir, s))
